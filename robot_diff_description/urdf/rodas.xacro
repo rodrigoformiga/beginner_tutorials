@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<robot name="robot_diff_wheel" xmlns:xacro="http://ros.org/wiki/xacro" >
+
+<xacro:macro name="robot_diff_wheel" params="lado_roda *joint_roda_pose *mesh_pose">
+<!--
+########################################################################################
+Modelagem da roda "link" "joint" "transmission" "gazebo"
+########################################################################################
+-->
+	<link name="roda_${lado_roda}">
+		<visual>
+			<xacro:insert_block name="mesh_pose"/>
+			<geometry>
+				<mesh filename="package://robot_diff_description/meshes/Roda.dae" />
+			</geometry>
+		</visual>
+		<collision>
+			<xacro:insert_block name="mesh_pose"/>
+			<geometry>
+				<mesh filename="package://robot_diff_description/meshes/Roda.dae" />
+			</geometry>
+		</collision>
+		<inertial>
+			<xacro:insert_block name="mesh_pose"/>
+			<mass value="0.008"/>
+			<inertia ixx="6.55015488e-7"  ixy="0.00000000e+0"  ixz="0.00000000e+0" iyy="3.64325772e-7" iyz="0.00000000e+0" izz="3.64325772e-7" />
+		</inertial>
+	</link>
+
+	<joint name="base_to_roda_${lado_roda}" type="continuous">
+		<parent link="chassi"/>
+		<child link="roda_${lado_roda}"/>
+		<xacro:insert_block name="joint_roda_pose"/>
+		<axis xyz="0 1 0" rpy="0 0 0" />
+	</joint>
+
+	<transmission name="trans_roda_${lado_roda}">
+		<type>transmission_interface/SimpleTransmission</type>
+		<joint name="base_to_roda_${lado_roda}">
+			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+		</joint>
+		<actuator name="roda_${lado_roda}_motor">
+			<mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+	</transmission>
+
+	<gazebo reference="roda_${lado_roda}">
+		<mu1 value="1.0"/>
+		<mu2 value="1.0"/>
+		<kp value="10000000.0" />
+		<kd value="1.0" />
+		<fdir1 value="1 0 0"/>
+	</gazebo>
+
+<!--
+########################################################################################
+Modelagem da motor direita "link" "joint"
+########################################################################################
+-->
+
+</xacro:macro>
+
+</robot>

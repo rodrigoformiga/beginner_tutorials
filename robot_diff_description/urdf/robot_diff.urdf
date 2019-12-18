@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<robot name="robot_diff" xmlns:xacro="http://ros.org/wiki/xacro">
+
+
+<!-- Included URDF/XACRO Files -->
+<xacro:include filename="$(find robot_diff_description)/urdf/rodas.xacro" />
+
+  <link name="base_link">
+  </link>
+
+  <!--link name="sensor_laser">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="0.006" />
+      <inertia ixx="1.275883e-4" ixy="0" ixz="0" iyy="1.940625e-4" iyz="0" izz="1.940625e-4"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.404" length="0.1"/>
+      </geometry>
+      <material name="white" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.404" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_sensor_laser" type="fixed">
+    <origin xyz="0.05 0 0.05" rpy="0 0 0"/>
+    <parent link="link_chassi"/>
+    <child link="sensor_laser"/>
+  </joint-->
+
+  <link name="chassi">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0.0"/>
+      <geometry>
+        <mesh filename="package://robot_diff_description/meshes/chassi.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0.0"/>
+      <geometry>
+        <mesh filename="package://robot_diff_description/meshes/chassi.dae"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.24800801e-6" ixy="0.000e+0" ixz="0.000e+0" iyy="2.65386794e-6" iyz="0.000e+0" izz="2.23401790e-6"/>
+    </inertial>
+  </link>
+  <joint name="base_to_chassis" type="fixed">
+    <parent link="base_link"/>
+    <child link="chassi"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.01"/>
+  </joint>
+
+  <xacro:robot_diff_wheel lado_roda="esquerda">
+    <origin xyz="0.0 0.0101 0.007" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 1.571"/>
+  </xacro:robot_diff_wheel>
+  <xacro:robot_diff_wheel lado_roda="direita">
+    <origin xyz="0.0 -0.0101 0.007" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 -1.571"/>
+  </xacro:robot_diff_wheel>
+
+<gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_diff_drive.so">
+      <robotNamespace>/</robotNamespace>
+      <legacyModeNS>true</legacyModeNS>
+      <alwaysOn>true</alwaysOn>
+      <legacyMode>false</legacyMode>
+      <updateRate>40</updateRate>
+      <leftJoint>base_to_roda_esquerda</leftJoint>
+      <rightJoint>base_to_roda_direita</rightJoint>
+      <!--wheelSeparation>0.4</wheelSeparation>
+      <wheelDiameter>0.2</wheelDiameter-->
+      <torque>20</torque>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <publishWheelTF>true</publishWheelTF>
+      <publishOdomTF>true</publishOdomTF>
+      <publishWheelJointState>true</publishWheelJointState>
+      <robotBaseFrame>base_link</robotBaseFrame>
+    </plugin>
+  </gazebo>
+  
+  <link name="sensor_laser">
+    <visual>
+      <origin rpy="0 1.571 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_diff_description/meshes/sensor_laser.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 1.571 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_diff_description/meshes/sensor_laser.dae"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 1.571 0" xyz="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.24800801e-6" ixy="0.000e+0" ixz="0.000e+0" iyy="2.65386794e-6" iyz="0.000e+0" izz="2.23401790e-6"/>
+    </inertial>
+  </link>
+  <joint name="base_to_sensor" type="continuous">
+    <parent link="chassi"/>
+    <child link="sensor_laser"/>
+    <origin rpy="0 0 0" xyz="0.00005 0.0 0.028"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <gazebo reference="sensor_laser">
+    <sensor type="ray" name="head_hokuyo_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <update_rate>20</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-1.570796</min_angle>
+            <max_angle>1.570796</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>10.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/m2wr/laser/scan</topicName>
+        <frameName>sensor_laser</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+    <!--link name="roda_direita">
+    <visual>
+      <origin rpy="0 0 -1.571" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_diff_description/meshes/Roda.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 -1.571" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_diff_description/meshes/Roda.dae"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 -1.571" xyz="0 0 0"/>
+      <mass value="0.00803039"/>
+      <inertia ixx="6.550e-7" ixy="0.000e+0" ixz="0.000e+0" iyy="3.643e-7" iyz="0.000e+0" izz="3.64325772e-7"/>
+    </inertial>
+  </link>
+  <joint name="base_to_roda_direita" type="continuous">
+    <parent link="chassi"/>
+    <child link="roda_direita"/>
+    <origin rpy="0 0 0" xyz="0.0 -0.0101 0.007"/>
+    <axis xyz="0 1 0"/>
+  </joint-->
+</robot>
